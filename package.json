@@ -1,0 +1,22 @@
+{
+  "name": "tickethelper",
+  "version": "1.0.0",
+  "description": "Helper bot for Ticket Tool - handles Request Help workflow for social engineering assignment",
+  "main": "index.mjs",
+  "type": "module",
+  "scripts": {
+    "start": "node index.mjs",
+    "dev": "node --watch index.mjs"
+  },
+  "keywords": [
+    "discord",
+    "ticket",
+    "support"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^14.15.3",
+    "dotenv": "^16.4.5"
+  }
+}
