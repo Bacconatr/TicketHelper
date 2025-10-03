@@ -749,14 +749,7 @@ client.on(Events.ChannelDelete, async (channel) => {
         .setURL(gistUrl)
         .setEmoji('🌐');
 
-      const downloadButton = new ButtonBuilder()
-        .setLabel('Download HTML')
-        .setStyle(ButtonStyle.Secondary)
-        .setCustomId('download_hint')
-        .setEmoji('💾')
-        .setDisabled(false);
-
-      const row = new ActionRowBuilder().addComponents(viewButton, downloadButton);
+      const row = new ActionRowBuilder().addComponents(viewButton);
       messageOptions.components = [row];
     }
 
