@@ -405,7 +405,20 @@ async function uploadToGist(htmlContent, filename) {
     }
 
     const gist = await response.json();
-    return gist.html_url;
+    
+    // Get the raw URL for the first (and only) file
+    const fileKey = Object.keys(gist.files)[0];
+    if (!fileKey || !gist.files[fileKey].raw_url) {
+      console.error('No raw URL found in Gist response');
+      return null;
+    }
+    
+    const rawUrl = gist.files[fileKey].raw_url;
+    
+    // Wrap with htmlpreview.github.io for proper HTML rendering
+    const previewUrl = `https://htmlpreview.github.io/?${rawUrl}`;
+    
+    return previewUrl;
   } catch (error) {
     console.error('Error uploading to Gist:', error);
     return null;
