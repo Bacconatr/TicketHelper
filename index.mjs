@@ -636,12 +636,27 @@ client.on(Events.InteractionCreate, async (interaction) => {
       originalEmbed.setColor(0x2ecc71);
       originalEmbed.setFooter({ text: `✅ Claimed by ${member.displayName} at ${new Date().toLocaleTimeString()}` });
 
-      const disabledRow = ActionRowBuilder.from(interaction.message.components[0]);
-      disabledRow.components.forEach(btn => btn.setDisabled(true));
+      // After claiming: Claim button disabled, Close Request enabled for the claimer
+      const row = new ActionRowBuilder();
+      const claimBtn = new ButtonBuilder()
+        .setCustomId('claimed_disabled')
+        .setLabel('Claim & Join')
+        .setStyle(ButtonStyle.Success)
+        .setEmoji('✋')
+        .setDisabled(true);
+      
+      const closeBtn = new ButtonBuilder()
+        .setCustomId(`qclose_claimed:${channelId}`)
+        .setLabel('Close Request')
+        .setStyle(ButtonStyle.Danger)
+        .setEmoji('🗑️')
+        .setDisabled(false); // Keep enabled so claimer can close if needed
+      
+      row.addComponents(claimBtn, closeBtn);
 
       await interaction.update({
         embeds: [originalEmbed],
-        components: [disabledRow]
+        components: [row]
       });
 
       await ticketChannel.send({
@@ -651,7 +666,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       console.log(`✅ ${member.user.tag} claimed and joined ticket ${ticketChannel.name}`);
     }
 
-    // Handle "Close Request" button to dismiss without joining
+    // Handle "Close Request" button to dismiss without joining (before claim)
     if (interaction.isButton() && interaction.customId.startsWith('qclose:')) {
       const member = interaction.member;
 
@@ -667,15 +682,72 @@ client.on(Events.InteractionCreate, async (interaction) => {
       originalEmbed.setColor(0x95a5a6);
       originalEmbed.setFooter({ text: `🗑️ Closed by ${member.displayName} without joining` });
 
-      const disabledRow = ActionRowBuilder.from(interaction.message.components[0]);
-      disabledRow.components.forEach(btn => btn.setDisabled(true));
+      // Recreate buttons and disable them
+      const row = new ActionRowBuilder();
+      const claimBtn = new ButtonBuilder()
+        .setCustomId('claim_disabled')
+        .setLabel('Claim & Join')
+        .setStyle(ButtonStyle.Success)
+        .setEmoji('✋')
+        .setDisabled(true);
+      
+      const closeBtn = new ButtonBuilder()
+        .setCustomId('close_disabled')
+        .setLabel('Close Request')
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji('🗑️')
+        .setDisabled(true);
+      
+      row.addComponents(claimBtn, closeBtn);
 
       await interaction.update({
         embeds: [originalEmbed],
-        components: [disabledRow]
+        components: [row]
       });
 
       console.log(`🗑️ ${member.user.tag} closed help request without joining`);
+    }
+
+    // Handle "Close Request" after claim (allows claimer to dismiss the queue entry)
+    if (interaction.isButton() && interaction.customId.startsWith('qclose_claimed:')) {
+      const member = interaction.member;
+
+      const hasStaffRole = member.roles.cache.has(TA_ROLE_ID) || member.roles.cache.has(INSTRUCTOR_ROLE_ID);
+      if (!hasStaffRole) {
+        return interaction.reply({
+          content: '❌ Only TAs or Instructors can close help requests.',
+          ephemeral: true
+        });
+      }
+
+      const originalEmbed = EmbedBuilder.from(interaction.message.embeds[0]);
+      originalEmbed.setColor(0x95a5a6);
+      originalEmbed.setFooter({ text: `🗑️ Dismissed by ${member.displayName}` });
+
+      // Disable both buttons
+      const row = new ActionRowBuilder();
+      const claimBtn = new ButtonBuilder()
+        .setCustomId('claim_disabled')
+        .setLabel('Claim & Join')
+        .setStyle(ButtonStyle.Success)
+        .setEmoji('✋')
+        .setDisabled(true);
+      
+      const closeBtn = new ButtonBuilder()
+        .setCustomId('close_disabled')
+        .setLabel('Close Request')
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji('🗑️')
+        .setDisabled(true);
+      
+      row.addComponents(claimBtn, closeBtn);
+
+      await interaction.update({
+        embeds: [originalEmbed],
+        components: [row]
+      });
+
+      console.log(`🗑️ ${member.user.tag} dismissed claimed help request`);
     }
 
   } catch (error) {
