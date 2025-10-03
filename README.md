@@ -1,58 +1,64 @@
-# Ticket Helper Bot for Social Engineering Assignment
+# Ticket Helper Bot
 
-A Discord bot that manages ticket-based support workflows for class assignments. Works alongside Ticket Tool to provide private student workspaces with JustinBot, optional TA/Instructor help via a claim system, and automatic HTML transcript generation.
+A Discord bot that works alongside Ticket Tool to manage private student support tickets with automatic HTML transcript generation.
 
 ## Features
 
-- **Private student tickets** - Each student gets a private channel with JustinBot
-- **Context-required help requests** - Students must explain their issue before staff can join
-- **Shared staff queue** - TAs and Instructors see all help requests in one place
-- **Claim system** - Staff claim tickets to avoid duplicate work
-- **Automatic HTML transcripts** - Beautiful, Discord-styled transcripts saved when tickets close
-- **Web-viewable transcripts** - Optional GitHub Gist integration for instant browser viewing
-- **Message caching** - Transcripts work even after channel deletion
+- Private student tickets with JustinBot for social engineering assignments
+- Context-required help requests (students must explain their issue)
+- Shared staff queue where TAs and Instructors can claim tickets
+- Automatic HTML transcript generation with Discord-style formatting
+- Optional GitHub Gist integration for instant browser viewing of transcripts
+- Message caching ensures transcripts work even after channel deletion
 
 ## Requirements
 
 - Node.js 18+
-- Discord bot with Message Content Intent enabled
-- Ticket Tool bot in your server
+- Discord bot with Message Content Intent and Server Members Intent enabled
+- Ticket Tool bot in your Discord server
 - GitHub personal access token (optional, for web-viewable transcripts)
 
-## Quick Setup
+## Quick Start
 
 ### 1. Discord Bot Setup
 
 1. Create bot at https://discord.com/developers/applications
-2. Enable intents: Server Members Intent, Message Content Intent
-3. Generate OAuth2 URL with `bot` scope and these permissions:
+2. Enable **Privileged Gateway Intents**: Server Members Intent, Message Content Intent
+3. Generate invite URL with `bot` scope and permissions:
    - View Channels, Send Messages, Embed Links, Attach Files
    - Read Message History, Manage Channels, Manage Messages
 4. Invite to your server
 
-### 2. Server Configuration
-
-Create these roles and channels:
+### 2. Server Structure
 
 **Roles:** `TA`, `Instructor`
 
 **Categories:**
-- `🎫 Online Tickets` - Permissions: @everyone ❌, TA/Instructor ✅ (view only)
-- `🎫 In-Person Tickets` - Same permissions
+- `🎫 Online Tickets` (deny @everyone, allow TA/Instructor to view)
+- `🎫 In-Person Tickets` (same permissions)
 
 **Channels:**
-- `#ticket-queue` - Visible to TA + Instructor only
-- `#ticket-transcripts` - Visible to TA + Instructor only
+- `#ticket-queue` (visible to TA + Instructor only)
+- `#ticket-transcripts` (visible to TA + Instructor only)
 
-### 3. Install and Configure
+### 3. Install
 
 ```bash
-cd tickethelper
 npm install
 cp .env.example .env
 ```
 
-Edit `.env` with your IDs (right-click items in Discord with Developer Mode enabled):
+Edit `.env` with your Discord IDs and tokens.
+
+### 4. Run
+
+```bash
+npm start
+```
+
+## Configuration
+
+All configuration is in `.env`:
 
 ```env
 DISCORD_TOKEN=your_bot_token
@@ -63,70 +69,59 @@ INPERSON_CATEGORY_ID=inperson_category_id
 TA_ROLE_ID=ta_role_id
 INSTRUCTOR_ROLE_ID=instructor_role_id
 TRANSCRIPT_CHANNEL_ID=transcripts_channel_id
-GITHUB_TOKEN=ghp_your_token_optional
+GITHUB_TOKEN=ghp_your_github_token_optional
 ```
 
-### 4. Optional: GitHub Gist Integration
+Get IDs by right-clicking items in Discord (Developer Mode must be enabled).
+
+## GitHub Gist Setup (Optional)
 
 For web-viewable transcripts:
 
 1. Go to https://github.com/settings/tokens
-2. Generate new token (classic) → Select `gist` scope only
-3. Add token to `.env` as `GITHUB_TOKEN`
+2. Generate new token (classic)
+3. Select scope: `gist` only
+4. Copy token and add to `.env` as `GITHUB_TOKEN`
 
-### 5. Run
+## How It Works
 
-```bash
-npm start
-```
-
-## Workflow
-
-1. **Student opens ticket** via Ticket Tool panel → Private channel created
-2. **Bot posts "Request Help" button** automatically
-3. **Student works with JustinBot** privately
-4. **Optional: Student requests help** → Fills context form → Posted to staff queue
-5. **Staff member claims ticket** → Joins the channel to assist
-6. **Student deletes channel when done** → Transcript auto-generated and posted to #ticket-transcripts
+1. Student opens ticket via Ticket Tool panel
+2. Bot posts "Request Help" button in the private ticket
+3. Student works with JustinBot privately
+4. If student needs help, they click "Request Help" and fill a form (requires context)
+5. Help request appears in #ticket-queue
+6. TA or Instructor clicks "Claim & Join" to enter the ticket
+7. When done, student deletes the channel
+8. Bot automatically generates and saves HTML transcript
 
 ## Transcript Features
 
 Each transcript includes:
 - Discord-styled HTML with dark theme
-- All messages with timestamps and avatars
-- Metadata (who opened, which staff helped, message count)
-- Downloadable .html file attachment
-- Optional "View in Browser" button (if GitHub token provided)
+- All messages with timestamps and user avatars
+- Channel metadata (opener, staff involved, timestamps)
+- Downloadable .html file
+- Optional "View in Browser" button (opens in web browser via GitHub Gist)
 
 ## Troubleshooting
 
-**Bot doesn't post Request Help button?**
+**Bot doesn't post Request Help button:**
 - Verify category IDs in `.env` are correct
-- Check bot has permissions in ticket categories
+- Check bot has View/Send/Manage permissions in ticket categories
 
-**Help requests don't appear in queue?**
-- Verify bot has Send Messages permission in #ticket-queue
-- Check TA_ROLE_ID and INSTRUCTOR_ROLE_ID are correct
+**Help requests don't appear in queue:**
+- Check bot has Send Messages permission in #ticket-queue
+- Verify TA_ROLE_ID and INSTRUCTOR_ROLE_ID are correct
 
-**No transcript generated?**
-- Messages are cached in RAM - if bot restarts during a ticket, cache is lost
-- Ensure TRANSCRIPT_CHANNEL_ID is correct
+**No transcript generated:**
+- Transcripts are cached in RAM - bot must be running during the ticket
+- Check TRANSCRIPT_CHANNEL_ID is correct
+- Verify bot has Send Messages + Attach Files permission
 
-**No "View in Browser" button?**
+**No "View in Browser" button:**
 - GITHUB_TOKEN is optional - transcripts work without it
-- Check GitHub token has `gist` scope
+- Verify token has `gist` scope
 - Check console for GitHub API errors
-
-## Project Structure
-
-```
-tickethelper/
-├── index.mjs          # Main bot code
-├── package.json       # Dependencies
-├── .env              # Configuration (gitignored)
-├── .env.example      # Template
-└── README.md         # This file
-```
 
 ## License
 

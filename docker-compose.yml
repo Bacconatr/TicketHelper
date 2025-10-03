@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  tickethelper:
+    build: .
+    container_name: tickethelper-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - discord-bots
+
+networks:
+  discord-bots:
+    driver: bridge
