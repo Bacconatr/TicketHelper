@@ -6,7 +6,7 @@ A Discord bot that works alongside Ticket Tool to manage private student support
 
 - Private student tickets with JustinBot for social engineering assignments
 - Context-required help requests (students must explain their issue)
-- Shared staff queue where TAs and Instructors can claim tickets
+- Shared staff queue where TAs, Head TAs, and Instructors can claim tickets
 - Automatic HTML transcript generation with Discord-style formatting
 - Optional GitHub Gist integration for instant browser viewing of transcripts
 - Message caching ensures transcripts work even after channel deletion
@@ -31,15 +31,15 @@ A Discord bot that works alongside Ticket Tool to manage private student support
 
 ### 2. Server Structure
 
-**Roles:** `TA`, `Instructor`
+**Roles:** `TA`, `Head TA`, `Instructor`
 
 **Categories:**
-- `🎫 Online Tickets` (deny @everyone, allow TA/Instructor to view)
+- `🎫 Online Tickets` (deny @everyone, allow TA/Head TA/Instructor to view)
 - `🎫 In-Person Tickets` (same permissions)
 
 **Channels:**
-- `#ticket-queue` (visible to TA + Instructor only)
-- `#ticket-transcripts` (visible to TA + Instructor only)
+- `#ticket-queue` (visible to TA + Head TA + Instructor only)
+- `#ticket-transcripts` (visible to TA + Head TA + Instructor only)
 
 ### 3. Install
 
@@ -67,6 +67,7 @@ QUEUE_CHANNEL_ID=ticket_queue_channel_id
 ONLINE_CATEGORY_ID=online_category_id
 INPERSON_CATEGORY_ID=inperson_category_id
 TA_ROLE_ID=ta_role_id
+HEAD_TA_ROLE_ID=head_ta_role_id
 INSTRUCTOR_ROLE_ID=instructor_role_id
 TRANSCRIPT_CHANNEL_ID=transcripts_channel_id
 GITHUB_TOKEN=ghp_your_github_token_optional
@@ -90,7 +91,7 @@ For web-viewable transcripts:
 3. Student works with JustinBot privately
 4. If student needs help, they click "Request Help" and fill a form (requires context)
 5. Help request appears in #ticket-queue
-6. TA or Instructor clicks "Claim & Join" to enter the ticket
+6. TA, Head TA, or Instructor clicks "Claim & Join" to enter the ticket
 7. When done, student deletes the channel
 8. Bot automatically generates and saves HTML transcript
 
@@ -111,7 +112,7 @@ Each transcript includes:
 
 **Help requests don't appear in queue:**
 - Check bot has Send Messages permission in #ticket-queue
-- Verify TA_ROLE_ID and INSTRUCTOR_ROLE_ID are correct
+- Verify TA_ROLE_ID, HEAD_TA_ROLE_ID, and INSTRUCTOR_ROLE_ID are correct
 
 **No transcript generated:**
 - Transcripts are cached in RAM - bot must be running during the ticket

@@ -36,6 +36,7 @@ const {
   ONLINE_CATEGORY_ID,
   INPERSON_CATEGORY_ID,
   TA_ROLE_ID,
+  HEAD_TA_ROLE_ID,
   INSTRUCTOR_ROLE_ID,
   TRANSCRIPT_CHANNEL_ID,
   GITHUB_TOKEN
@@ -49,6 +50,7 @@ const requiredEnvVars = {
   ONLINE_CATEGORY_ID,
   INPERSON_CATEGORY_ID,
   TA_ROLE_ID,
+  HEAD_TA_ROLE_ID,
   INSTRUCTOR_ROLE_ID,
   TRANSCRIPT_CHANNEL_ID
 };
@@ -74,9 +76,10 @@ const client = new Client({
   partials: [Partials.Channel, Partials.Message]
 });
 
-// Store ticket metadata and cached messages
+// Store ticket metadata, cached messages, and queue message IDs
 const ticketMetadata = new Map();
 const cachedMessages = new Map();
+const queueMessages = new Map(); // Map ticket channel ID to queue message ID
 
 function isTicketChannel(channel) {
   return (
@@ -480,9 +483,8 @@ client.on(Events.ChannelCreate, async (channel) => {
         `Click the **Request Help** button below and fill out the form.\n` +
         `A staff member will review your request and join if needed.\n\n` +
         `**When you've completed the assignment:**\n` +
-        `Right-click this channel → Delete Channel\n` +
-        `Your transcript will be automatically saved.\n\n` +
-        `⚠️ *Do not share flags, answers, or secrets in this channel.*`,
+        `Click close ticket from Ticket Tool in this channel\n` +
+        `Your transcript will be automatically saved.\n\n`,
       components: [row]
     });
 
@@ -588,11 +590,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       const buttonRow = new ActionRowBuilder().addComponents(claimButton, closeButton);
 
-      await queueChannel.send({
-        content: `<@&${TA_ROLE_ID}> <@&${INSTRUCTOR_ROLE_ID}>`,
+      const queueMessage = await queueChannel.send({
+        content: `<@&${TA_ROLE_ID}> <@&${HEAD_TA_ROLE_ID}> <@&${INSTRUCTOR_ROLE_ID}>`,
         embeds: [embed],
         components: [buttonRow]
       });
+
+      // Store the queue message ID for this ticket
+      queueMessages.set(channelId, queueMessage.id);
 
       await interaction.reply({
         content: '✅ Your request has been sent to staff. A TA or Instructor will review it and join your ticket if needed.',
@@ -606,10 +611,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
     if (interaction.isButton() && interaction.customId.startsWith('claim:')) {
       const member = interaction.member;
 
-      const hasStaffRole = member.roles.cache.has(TA_ROLE_ID) || member.roles.cache.has(INSTRUCTOR_ROLE_ID);
+      const hasStaffRole = member.roles.cache.has(TA_ROLE_ID) || member.roles.cache.has(HEAD_TA_ROLE_ID) || member.roles.cache.has(INSTRUCTOR_ROLE_ID);
       if (!hasStaffRole) {
         return interaction.reply({
-          content: 'Only TAs or Instructors can claim help requests.',
+          content: 'Only TAs, Head TAs, or Instructors can claim help requests.',
           ephemeral: true
         });
       }
@@ -670,10 +675,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
     if (interaction.isButton() && interaction.customId.startsWith('qclose:')) {
       const member = interaction.member;
 
-      const hasStaffRole = member.roles.cache.has(TA_ROLE_ID) || member.roles.cache.has(INSTRUCTOR_ROLE_ID);
+      const hasStaffRole = member.roles.cache.has(TA_ROLE_ID) || member.roles.cache.has(HEAD_TA_ROLE_ID) || member.roles.cache.has(INSTRUCTOR_ROLE_ID);
       if (!hasStaffRole) {
         return interaction.reply({
-          content: '❌ Only TAs or Instructors can close help requests.',
+          content: '❌ Only TAs, Head TAs, or Instructors can close help requests.',
           ephemeral: true
         });
       }
@@ -712,10 +717,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
     if (interaction.isButton() && interaction.customId.startsWith('qclose_claimed:')) {
       const member = interaction.member;
 
-      const hasStaffRole = member.roles.cache.has(TA_ROLE_ID) || member.roles.cache.has(INSTRUCTOR_ROLE_ID);
+      const hasStaffRole = member.roles.cache.has(TA_ROLE_ID) || member.roles.cache.has(HEAD_TA_ROLE_ID) || member.roles.cache.has(INSTRUCTOR_ROLE_ID);
       if (!hasStaffRole) {
         return interaction.reply({
-          content: '❌ Only TAs or Instructors can close help requests.',
+          content: '❌ Only TAs, Head TAs, or Instructors can close help requests.',
           ephemeral: true
         });
       }
@@ -762,7 +767,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
-// 4) EVENT: When ticket is deleted, generate transcript from cached messages
+// 4) EVENT: When ticket is deleted, generate transcript from cached messages and close queue entry
 client.on(Events.ChannelDelete, async (channel) => {
   try {
     if (!isTicketChannel(channel)) return;
@@ -775,6 +780,67 @@ client.on(Events.ChannelDelete, async (channel) => {
     if (!messages || messages.length === 0) {
       console.log('⚠️ No cached messages found for transcript');
       return;
+    }
+
+    // Close/update the queue message if it exists
+    const queueMessageId = queueMessages.get(channel.id);
+    if (queueMessageId) {
+      try {
+        const queueChannel = await client.channels.fetch(QUEUE_CHANNEL_ID);
+        const queueMessage = await queueChannel.messages.fetch(queueMessageId);
+        
+        if (queueMessage && queueMessage.embeds.length > 0) {
+          const originalEmbed = EmbedBuilder.from(queueMessage.embeds[0]);
+          originalEmbed.setColor(0x95a5a6);
+          originalEmbed.setFooter({ text: `✅ Ticket closed - Transcript saved at ${new Date().toLocaleTimeString()}` });
+
+          // Disable all buttons
+          const row = new ActionRowBuilder();
+          const claimBtn = new ButtonBuilder()
+            .setCustomId('claim_disabled')
+            .setLabel('Claim & Join')
+            .setStyle(ButtonStyle.Success)
+            .setEmoji('✋')
+            .setDisabled(true);
+          
+          const closeBtn = new ButtonBuilder()
+            .setCustomId('close_disabled')
+            .setLabel('Close Request')
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('🗑️')
+            .setDisabled(true);
+          
+          row.addComponents(claimBtn, closeBtn);
+
+          await queueMessage.edit({
+            embeds: [originalEmbed],
+            components: [row]
+          });
+          
+          console.log(`✅ Updated queue message for closed ticket ${channel.name}`);
+        }
+        
+        queueMessages.delete(channel.id);
+      } catch (error) {
+        console.error('Error updating queue message:', error.message);
+      }
+    }
+
+    // Get student user ID from channel permissions
+    let studentUserId = null;
+    const permissions = channel.permissionOverwrites.cache;
+    for (const [id, overwrite] of permissions) {
+      if (overwrite.type === 1) {
+        try {
+          const member = await channel.guild.members.fetch(id);
+          if (!member.user.bot) {
+            studentUserId = member.id;
+            break;
+          }
+        } catch (e) {
+          // Ignore
+        }
+      }
     }
 
     const htmlContent = generateHTMLTranscript(channel, messages, metadata);
@@ -802,6 +868,7 @@ client.on(Events.ChannelDelete, async (channel) => {
         { name: 'Category', value: categoryName, inline: true },
         { name: 'Ticket ID', value: channel.id, inline: true },
         { name: 'Opened by', value: metadata.opener || 'Unknown', inline: true },
+        { name: 'Student ID', value: studentUserId || 'Unknown', inline: true },
         { name: 'Staff involved', value: metadata.claimedBy.length > 0 ? metadata.claimedBy.join(', ') : 'None (student worked independently)', inline: false },
         { name: 'Messages', value: `${messages.length} messages`, inline: true }
       )
@@ -825,7 +892,44 @@ client.on(Events.ChannelDelete, async (channel) => {
       messageOptions.components = [row];
     }
 
-    await transcriptChannel.send(messageOptions);
+    const transcriptMessage = await transcriptChannel.send(messageOptions);
+
+    // DM the student with their transcript
+    if (studentUserId) {
+      try {
+        const student = await client.users.fetch(studentUserId);
+        const dmEmbed = new EmbedBuilder()
+          .setTitle('📄 Your Ticket Transcript')
+          .setDescription(`Your ticket **${channel.name}** has been closed. Here's your transcript:`)
+          .setColor(0x2ecc71)
+          .setTimestamp();
+
+        const dmOptions = { embeds: [dmEmbed] };
+        
+        // Add view button if available
+        if (gistUrl) {
+          const viewButton = new ButtonBuilder()
+            .setLabel('View in Browser')
+            .setStyle(ButtonStyle.Link)
+            .setURL(gistUrl)
+            .setEmoji('🌐');
+          const row = new ActionRowBuilder().addComponents(viewButton);
+          dmOptions.components = [row];
+        }
+
+        // Attach the HTML file
+        const dmAttachment = new AttachmentBuilder(
+          Buffer.from(htmlContent, 'utf-8'),
+          { name: filename }
+        );
+        dmOptions.files = [dmAttachment];
+
+        await student.send(dmOptions);
+        console.log(`✅ DM sent to student ${student.tag} with transcript`);
+      } catch (error) {
+        console.error(`❌ Could not DM student (ID: ${studentUserId}):`, error.message);
+      }
+    }
 
     // Clean up
     cachedMessages.delete(channel.id);
@@ -836,6 +940,9 @@ client.on(Events.ChannelDelete, async (channel) => {
     console.error('Error saving transcript:', error);
   }
 });
+
+
+
 
 // Bot ready event
 client.once(Events.ClientReady, (c) => {

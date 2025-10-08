@@ -13,6 +13,7 @@ Complete step-by-step instructions for deploying the Ticket Helper bot.
 ### Step 2: Create Roles
 Server Settings → Roles → Create Role:
 - `TA`
+- `Head TA`
 - `Instructor`
 
 Assign yourself the `Instructor` role for testing.
@@ -25,6 +26,7 @@ Right-click server → Create Category:
 **Permissions for BOTH categories:**
 - @everyone: ❌ View Channel
 - TA: ✅ View Channel (they see empty category)
+- Head TA: ✅ View Channel
 - Instructor: ✅ View Channel
 
 Categories will appear empty to staff until they claim tickets.
@@ -35,11 +37,13 @@ Create these at the server root (not inside categories):
 **#ticket-queue:**
 - @everyone: ❌ View Channel
 - TA: ✅ View/Send
+- Head TA: ✅ View/Send
 - Instructor: ✅ View/Send
 
 **#ticket-transcripts:**
 - @everyone: ❌ View Channel
 - TA: ✅ View
+- Head TA: ✅ View
 - Instructor: ✅ View/Send
 
 ### Step 5: Get Discord IDs
@@ -51,7 +55,8 @@ Right-click each item and select "Copy ID":
 4. 🎫 Online Tickets category → `ONLINE_CATEGORY_ID`
 5. 🎫 In-Person Tickets category → `INPERSON_CATEGORY_ID`
 6. @TA role → `TA_ROLE_ID`
-7. @Instructor role → `INSTRUCTOR_ROLE_ID`
+7. @Head TA role → `HEAD_TA_ROLE_ID`
+8. @Instructor role → `INSTRUCTOR_ROLE_ID`
 
 ---
 
@@ -117,6 +122,7 @@ QUEUE_CHANNEL_ID=queue_channel_id
 ONLINE_CATEGORY_ID=online_category_id
 INPERSON_CATEGORY_ID=inperson_category_id
 TA_ROLE_ID=ta_role_id
+HEAD_TA_ROLE_ID=head_ta_role_id
 INSTRUCTOR_ROLE_ID=instructor_role_id
 TRANSCRIPT_CHANNEL_ID=transcripts_channel_id
 GITHUB_TOKEN=your_github_token_optional
@@ -227,7 +233,7 @@ Place the panel buttons in a public channel where students can access them (like
 - Verify TA_ROLE_ID and INSTRUCTOR_ROLE_ID match your roles
 
 **Can't claim tickets:**
-- Ensure you have TA or Instructor role assigned
+- Ensure you have TA, Head TA, or Instructor role assigned
 - Verify role IDs in `.env` are correct
 
 **No transcript generated:**
@@ -245,37 +251,6 @@ Place the panel buttons in a public channel where students can access them (like
 - Usually a permissions issue
 - Check console logs for specific error
 - Verify bot has all required permissions in relevant channels
-
----
-
-## Production Deployment
-
-### Running on Raspberry Pi or Server
-
-1. Install Node.js 18+ on your Pi
-2. Clone/copy the bot files to your Pi
-3. Configure `.env` with your IDs
-4. Use a process manager to keep it running:
-
-**Using PM2 (recommended):**
-```bash
-npm install -g pm2
-pm2 start index.mjs --name tickethelper
-pm2 save
-pm2 startup
-```
-
-**Or using systemd:**
-Create `/etc/systemd/system/tickethelper.service` and configure as a service.
-
----
-
-## Support
-
-For issues with:
-- This bot: Check console logs and verify `.env` configuration
-- Ticket Tool: See https://docs.tickettool.xyz/
-- Discord bot setup: See https://discord.com/developers/docs
 
 ---
 
