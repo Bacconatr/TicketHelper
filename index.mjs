@@ -595,7 +595,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
       const buttonRow = new ActionRowBuilder().addComponents(claimButton, closeButton);
 
       const queueMessage = await queueChannel.send({
-        content: `<@&${TA_ROLE_ID}> <@&${HEAD_TA_ROLE_ID}> <@&${INSTRUCTOR_ROLE_ID}>`,
         embeds: [embed],
         components: [buttonRow]
       });
