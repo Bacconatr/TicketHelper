@@ -33,8 +33,8 @@ const {
   DISCORD_TOKEN,
   GUILD_ID,
   QUEUE_CHANNEL_ID,
-  ONLINE_CATEGORY_ID,
-  INPERSON_CATEGORY_ID,
+  ONLINE_CATEGORY_IDS,
+  INPERSON_CATEGORY_IDS,
   TA_ROLE_ID,
   HEAD_TA_ROLE_ID,
   INSTRUCTOR_ROLE_ID,
@@ -42,13 +42,17 @@ const {
   GITHUB_TOKEN
 } = process.env;
 
+// Parse comma-separated category IDs into arrays
+const ONLINE_CATEGORIES = ONLINE_CATEGORY_IDS ? ONLINE_CATEGORY_IDS.split(',').map(id => id.trim()) : [];
+const INPERSON_CATEGORIES = INPERSON_CATEGORY_IDS ? INPERSON_CATEGORY_IDS.split(',').map(id => id.trim()) : [];
+
 // Validate required env vars (GITHUB_TOKEN optional but recommended)
 const requiredEnvVars = {
   DISCORD_TOKEN,
   GUILD_ID,
   QUEUE_CHANNEL_ID,
-  ONLINE_CATEGORY_ID,
-  INPERSON_CATEGORY_ID,
+  ONLINE_CATEGORY_IDS,
+  INPERSON_CATEGORY_IDS,
   TA_ROLE_ID,
   HEAD_TA_ROLE_ID,
   INSTRUCTOR_ROLE_ID,
@@ -84,13 +88,13 @@ const queueMessages = new Map(); // Map ticket channel ID to queue message ID
 function isTicketChannel(channel) {
   return (
     channel?.type === ChannelType.GuildText &&
-    (channel.parentId === ONLINE_CATEGORY_ID || channel.parentId === INPERSON_CATEGORY_ID)
+    (ONLINE_CATEGORIES.includes(channel.parentId) || INPERSON_CATEGORIES.includes(channel.parentId))
   );
 }
 
 function getCategoryName(channel) {
-  if (channel.parentId === ONLINE_CATEGORY_ID) return 'Online';
-  if (channel.parentId === INPERSON_CATEGORY_ID) return 'In-Person';
+  if (ONLINE_CATEGORIES.includes(channel.parentId)) return 'Online';
+  if (INPERSON_CATEGORIES.includes(channel.parentId)) return 'In-Person';
   return 'Unknown';
 }
 
@@ -952,8 +956,8 @@ client.once(Events.ClientReady, (c) => {
   console.log(`   Logged in as: ${c.user.tag}`);
   console.log(`   Server ID: ${GUILD_ID}`);
   console.log(`   Monitoring categories:`);
-  console.log(`   • Online Tickets: ${ONLINE_CATEGORY_ID}`);
-  console.log(`   • In-Person Tickets: ${INPERSON_CATEGORY_ID}`);
+  console.log(`   • Online Tickets (${ONLINE_CATEGORIES.length}): ${ONLINE_CATEGORIES.join(', ')}`);
+  console.log(`   • In-Person Tickets (${INPERSON_CATEGORIES.length}): ${INPERSON_CATEGORIES.join(', ')}`);
   console.log(`   Queue channel: ${QUEUE_CHANNEL_ID}`);
   console.log(`   Transcript channel: ${TRANSCRIPT_CHANNEL_ID}`);
   console.log('═══════════════════════════════════════════');

@@ -1,5 +1,7 @@
 # Dependencies
 node_modules/
+verification/__pycache__/
+*.pyc
 
 # Environment variables
 .env
@@ -17,3 +19,11 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+env/
