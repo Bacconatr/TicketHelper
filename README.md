@@ -55,32 +55,7 @@ Ticket closes → HTML transcript auto-generated
 - Google Form with verification field
 - Domain with SSL (for webhook)
 
-### Deploy in 5 Commands
-
-```bash
-# 1. Clone repository
-git clone <your-repo> tickethelper && cd tickethelper
-
-# 2. Configure environment
-cp .env.example .env
-nano .env  # Fill in your tokens and IDs
-
-# 3. Deploy both bots
-docker-compose up -d --build
-
-# 4. Verify deployment
-docker ps && docker logs -f ticket-verification-bot
-
-# 5. Test
-curl https://ticket.lospolloshermanos.dev/health
-```
-
-**Detailed guides:**
-- 📖 [Full Setup Guide](SETUP.md) - Complete step-by-step
-- ⚡ [Quick Start](QUICK_START.md) - Deploy in 10 minutes
-- ✅ [Deployment Checklist](DEPLOYMENT_CHECKLIST.md) - Ensure nothing is missed
-
----
+--- 
 
 ## User Experience
 
@@ -136,11 +111,6 @@ VERIFIED_ROLE_NAME=Verified
 - discord.py 2.3
 - aiohttp 3.9
 
-**Infrastructure:**
-- Docker & Docker Compose
-- Nginx Proxy Manager
-- Cloudflare DNS
-
 ---
 
 ## Commands
@@ -152,64 +122,6 @@ VERIFIED_ROLE_NAME=Verified
 - `/manual_verify @user` - Manually verify a user
 - `/verified_users` - List all verified users
 - `/unverify @user` - Remove verification
-
----
-
-## Docker Management
-
-```bash
-# Start both bots
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# View specific bot
-docker logs -f tickethelper-bot
-docker logs -f ticket-verification-bot
-
-# Restart
-docker-compose restart
-
-# Stop
-docker-compose down
-
-# Update and rebuild
-git pull && docker-compose up -d --build
-```
-
----
-
-## Security
-
-- Verification codes are single-use and cryptographically random
-- Webhook uses HTTPS with Let's Encrypt SSL
-- Bot tokens stored in environment variables (not committed)
-- Transcripts uploaded as private GitHub Gists
-- Role hierarchy prevents privilege escalation
-- Google Form responses only accessible to verified staff
-
----
-
-## Testing
-
-```bash
-# Test verification webhook
-curl https://ticket.lospolloshermanos.dev/health
-
-# Test verification flow
-# 1. Run /verify in Discord
-# 2. Submit form
-# 3. Check role assignment
-# 4. Check logs
-
-# Test ticket flow
-# 1. Create ticket via Ticket Tool
-# 2. Verify "Request Help" button appears
-# 3. Send messages
-# 4. Close ticket
-# 5. Check transcript in #ticket-transcripts
-```
 
 ---
 
