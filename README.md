@@ -50,10 +50,8 @@ Ticket closes → HTML transcript auto-generated
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Docker & Docker Compose
 - Two Discord bots (see [SETUP.md](SETUP.md))
 - Google Form with verification field
-- Domain with SSL (for webhook)
 
 --- 
 
